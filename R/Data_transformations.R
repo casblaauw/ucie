@@ -11,46 +11,49 @@ NULL
 
 # RGL_USE_NULL=TRUE
 
-RGB_space <- data.frame("R"= c(seq(0, 255, by=32),255, # K -> R
-                               seq(0, 255, by=32),255, # G -> Y
-                               rep(255, 9), # Y -> W
-                               rep(255, 9), # R -> Y
-                               rep(255, 9), # R -> M
-                               seq(0, 255, by=32),255, # B -> M
-                               rep(0, 9), # B -> C
-                               seq(0, 255, by=32),255, # C -> W
-                               rep(0, 9), # G -> C
-                               rep(0, 9), # K -> G
-                               rep(0, 9), # K -> B
-                               rep(255, 9)), # M -> W
 
-                        "G"= c(rep(0, 9), # K -> R
-                               rep(255, 9), # G -> Y
-                               rep(255, 9), # Y -> W
-                               seq(0, 255, by=32),255, # R -> Y
-                               rep(0, 9),  # R -> M
-                               rep(0, 9),  # B -> M
-                               seq(0, 255, by=32),255, # B -> C
-                               rep(255, 9), # C -> W
-                               rep(255, 9), # G -> C
-                               seq(0, 255, by=32),255, # K -> G
-                               rep(0, 9), # K -> B
-                               seq(0, 255, by=32),255), # M -> W
+RGB_space <- as.matrix(data.frame(
+  "R"= c(seq(0, 255, by=32),255, # K -> R
+         seq(0, 255, by=32),255, # G -> Y
+         rep(255, 9), # Y -> W
+         rep(255, 9), # R -> Y
+         rep(255, 9), # R -> M
+         seq(0, 255, by=32),255, # B -> M
+         rep(0, 9), # B -> C
+         seq(0, 255, by=32),255, # C -> W
+         rep(0, 9), # G -> C
+         rep(0, 9), # K -> G
+         rep(0, 9), # K -> B
+         rep(255, 9)), # M -> W
 
-                        "B"= c(rep(0, 9), # K -> R
-                               rep(0, 9), # G -> Y
-                               seq(0, 255, by=32),255, # Y -> W
-                               rep(0, 9), # R -> Y
-                               seq(0, 255, by=32),255, # R -> M
-                               rep(255, 9),  # B -> M
-                               rep(255, 9), # B -> C
-                               rep(255, 9), # C -> W
-                               seq(0, 255, by=32),255, # G -> C
-                               rep(0, 9), # K -> G
-                               seq(0, 255, by=32),255, # K -> B
-                               rep(255, 9))# M -> W
+  "G"= c(rep(0, 9), # K -> R
+         rep(255, 9), # G -> Y
+         rep(255, 9), # Y -> W
+         seq(0, 255, by=32),255, # R -> Y
+         rep(0, 9),  # R -> M
+         rep(0, 9),  # B -> M
+         seq(0, 255, by=32),255, # B -> C
+         rep(255, 9), # C -> W
+         rep(255, 9), # G -> C
+         seq(0, 255, by=32),255, # K -> G
+         rep(0, 9), # K -> B
+         seq(0, 255, by=32),255), # M -> W
 
-)
+  "B"= c(rep(0, 9), # K -> R
+         rep(0, 9), # G -> Y
+         seq(0, 255, by=32),255, # Y -> W
+         rep(0, 9), # R -> Y
+         seq(0, 255, by=32),255, # R -> M
+         rep(255, 9),  # B -> M
+         rep(255, 9), # B -> C
+         rep(255, 9), # C -> W
+         seq(0, 255, by=32),255, # G -> C
+         rep(0, 9), # K -> G
+         seq(0, 255, by=32),255, # K -> B
+         rep(255, 9))# M -> W
+))
+
+
 
 ColorSpacePolygon <- function(ColorSpace){
   RGB2Lab <- function(mat) {
