@@ -180,7 +180,7 @@ CIELABspace <- function(RGB_points = RGB_space){
   CIELAB_coords <- RGB2Lab(RGB_points)
   CIELAB <- bind_cols(
     CIELAB_coords,
-    colour = colorspace::hex(colorspace::LAB(CIELAB_coords, fix = TRUE))
+    colour = colorspace::hex(colorspace::LAB(CIELAB_coords), fixup = TRUE)
   )
   return(CIELAB)
 }
