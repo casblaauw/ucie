@@ -7,6 +7,7 @@ Sys.setenv("DISPLAY"=":0.0")
 #' @import remotes
 #' @import colorspace
 #' @importFrom geometry convhulln
+#' @importFrom geometry delaunayn
 #' @importFrom pracma distmat
 #' @importFrom ptinpoly pip3d
 #' @importFrom rlang abort
@@ -177,7 +178,7 @@ RGB2Lab <- function(data) {
 #' @return A data frame with columns L/A/B/colour, containing coordinates and hex codes.
 #' @keywords internal
 CIELAB_space <- function(RGB_points = RGB_space){
-  CIELAB_coords <- RGB2Lab(ColorSpace)
+  CIELAB_coords <- RGB2Lab(RGB_points)
   CIELAB <- bind_cols(
     CIELAB_coords,
     colour = colorspace::hex(colorspace::LAB(CIELAB_coords, fix = TRUE))
@@ -507,8 +508,8 @@ FitColorsFunction <- function(dataset, WL, Wa, Wb, center = TRUE){
 #'
 #' @examples
 #' \donttest{
-#'   df <- data.frame(V1=runif(10,  0,1), V2=runif(10,  0,5), V3=runif(10,  0,30))
-#'   data2cielab(df, Wb=1.2, S=1.6)
+#'   df <- data.frame(V1 = runif(10, 0, 1), V2 = runif(10, 0, 5), V3 = runif(10, 0, 30))
+#'   data2cielab(df, Wb = 1.2, S = 1.6)
 #'   data2cielab(df, LAB_coordinates = TRUE)
 #' }
 data2cielab <- function(dataset, WL = 1, Wa = 1, Wb = 1, S = 1, LAB_coordinates = FALSE, center = TRUE, verbose = FALSE){
@@ -552,7 +553,7 @@ data2cielab <- function(dataset, WL = 1, Wa = 1, Wb = 1, S = 1, LAB_coordinates 
     return(col_coords)
   } else {
     # Turn hex character vector into a data frame
-    col_hex <- colorspace::hex(colorspace_obj, fixup = fix) %>%
+    col_hex <- colorspace::hex(colorspace_obj, fixup = TRUE) %>%
       data.frame(colour = .) %>%
       tibble::rownames_to_column('names')
     return(col_hex)

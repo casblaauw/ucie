@@ -43,8 +43,8 @@ Mapping 3D Data into CIELab color space
 }
 \examples{
 \donttest{
-  df <- data.frame(V1=runif(10,  0,1), V2=runif(10,  0,5), V3=runif(10,  0,30))
-  data2cielab(df, Wb=1.2, S=1.6)
+  df <- data.frame(V1 = runif(10, 0, 1), V2 = runif(10, 0, 5), V3 = runif(10, 0, 30))
+  data2cielab(df, Wb = 1.2, S = 1.6)
   data2cielab(df, LAB_coordinates = TRUE)
 }
 }
