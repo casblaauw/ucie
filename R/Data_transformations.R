@@ -74,8 +74,7 @@ RGB_space <- as.matrix(data.frame(
 #'   * 2D matrices or data frames are expanded to 3D by padding with 1's.
 #'
 #' @keywords internal
-prep_ucie_data <- function(dataset, check_3D = TRUE) {
-
+PrepData <- function(dataset, check_3D = TRUE) {
 
   # If data frame, transform to matrix
   if (inherits(dataset, "data.frame")) {
@@ -177,7 +176,7 @@ RGB2Lab <- function(data) {
 #'
 #' @return A data frame with columns L/A/B/colour, containing coordinates and hex codes.
 #' @keywords internal
-CIELAB_space <- function(RGB_points = RGB_space){
+CIELABspace <- function(RGB_points = RGB_space){
   CIELAB_coords <- RGB2Lab(RGB_points)
   CIELAB <- bind_cols(
     CIELAB_coords,
@@ -517,7 +516,7 @@ data2cielab <- function(dataset, WL = 1, Wa = 1, Wb = 1, S = 1, LAB_coordinates 
     stop("Package 'tictoc' is needed to run data2cielab in verbose mode.")
   }
 
-  dataset <- prep_ucie_data(dataset)
+  dataset <- PrepData(dataset)
 
   tictoc::tic('Fitting data to CIELAB space')
   final_params <- FitColorsFunction(dataset, WL, Wa, Wb, center = center)
