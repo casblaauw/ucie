@@ -508,6 +508,12 @@ data2cielab <- function(dataset, WL = 1, Wa = 1, Wb = 1, S = 1, LAB_coordinates 
 
   dataset <- PrepData(dataset)
 
+  if (!is.null(rownames(dataset))) {
+    data_rownames <- rownames(dataset)
+  } else {
+    data_rownames <- 1:nrow(dataset)
+  }
+
   if (verbose) start_fit <- Sys.time()
   final_params <- FitColorsFunction(dataset, WL, Wa, Wb, center = center)
   if (verbose) {
@@ -540,14 +546,16 @@ data2cielab <- function(dataset, WL = 1, Wa = 1, Wb = 1, S = 1, LAB_coordinates 
     # Turn coordinates matrix into a data frame
     col_coords <- colorspace::coords(colorspace_obj) %>%
       as.data.frame()
-    col_coords$names <- rownames(col_coords)
+    # Move row names or indices to column for tidy data
+    col_coords <- cbind(names = data_rownames, col_coords)
     rownames(col_coords) <- NULL
     return(col_coords)
   } else {
     # Turn hex character vector into a data frame
     col_hex <- colorspace::hex(colorspace_obj, fixup = TRUE) %>%
       data.frame(colour = .)
-    col_hex$names <- rownames(col_hex)
+    # Move row names or indices to column for tidy data
+    col_hex <- cbind(names = data_rownames, col_hex)
     rownames(col_hex) <- NULL
     return(col_hex)
   }
