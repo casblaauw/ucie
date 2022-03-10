@@ -20,9 +20,6 @@ RoxygenNote: 7.1.2
 Imports: 
     colorspace,
     dplyr,
-    purrr,
-    rlang,
-    tibble,
     geometry,
     pracma,
     ptinpoly,
@@ -30,5 +27,4 @@ Imports:
     remotes
 Suggests: 
     testthat (>= 3.0.0),
-    tictoc
 Config/testthat/edition: 3

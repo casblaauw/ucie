@@ -1,8 +1,6 @@
 Sys.setenv("DISPLAY"=":0.0")
 
 #' @import dplyr
-#' @import purrr
-#' @import tibble
 #' @import rgl
 #' @import remotes
 #' @import colorspace
@@ -10,7 +8,6 @@ Sys.setenv("DISPLAY"=":0.0")
 #' @importFrom geometry delaunayn
 #' @importFrom pracma distmat
 #' @importFrom ptinpoly pip3d
-#' @importFrom rlang abort
 NULL
 
 # RGL_USE_NULL=TRUE
@@ -85,8 +82,8 @@ PrepData <- function(dataset, check_3D = TRUE) {
     }
 
     # Check for non-numeric data
-    if (!all(purrr::map_lgl(dataset, is.numeric))) {
-      rlang::abort(paste("The dataset contains non-numeric columns.",
+    if (!all(sapply(dataset, is.numeric))) {
+      stop(paste("The dataset contains non-numeric columns.",
                          "Please check your data and use the rownames_col argument if necessary."))
     }
     dataset <- as.matrix(dataset)
@@ -108,7 +105,7 @@ PrepData <- function(dataset, check_3D = TRUE) {
 
   # Check for missing/leftover character data
   if (anyNA(dataset)) {
-    rlang::abort(paste("Your matrix data contains missing data or",
+    stop(paste("Your matrix data contains missing data or",
                        "non-numeric data outside the first column.",
                        "Please check your dataset."))
   }
@@ -121,12 +118,12 @@ PrepData <- function(dataset, check_3D = TRUE) {
       dataset <- cbind(dataset, 1)
     }
     if (ncol(dataset) != 3) {
-      rlang::abort("The dataset should have 3 numeric columns!")
+      stop("The dataset should have 3 numeric columns!")
     }
 
     # Check for missing values
     if (anyNA(dataset)) {
-      rlang::abort("The dataset has missing values. Check again!")
+      stop("The dataset has missing values. Check again!")
     }
 
     # Set column names
@@ -178,7 +175,7 @@ RGB2Lab <- function(data) {
 #' @keywords internal
 CIELABspace <- function(RGB_points = RGB_space){
   CIELAB_coords <- RGB2Lab(RGB_points)
-  CIELAB <- bind_cols(
+  CIELAB <- dplyr::bind_cols(
     CIELAB_coords,
     colour = colorspace::hex(colorspace::LAB(CIELAB_coords), fixup = TRUE)
   )
@@ -435,7 +432,7 @@ FitColorsFunction <- function(dataset, WL, Wa, Wb, center = TRUE){
   dat_polygon_scaled <- Scaling(dat_polygon, S_guess)
 
   # Create a list of start values, forcibly mirroring L-rotation to explore rotation landscape
-  start_params <- purrr::map(
+  start_params <- lapply(
     1:25,
     function(counter) {
       Rot <- c(RotL = pi / 4 + (pi / (1 + 0.5 * counter)),
@@ -456,7 +453,7 @@ FitColorsFunction <- function(dataset, WL, Wa, Wb, center = TRUE){
   # set.seed(123)
 
   # Optimise for each set of start params and return in data frame
-  fitted_params <- purrr::map_dfr(start_params,
+  fitted_params <- lapply(start_params,
                            function(params) {
                              optim_result <- stats::optim(
                                par = params,
@@ -470,11 +467,12 @@ FitColorsFunction <- function(dataset, WL, Wa, Wb, center = TRUE){
                                faces = LAB_chull$hull,
                                control = list(fnscale = -1, maxit = 1000)
                              )
-                             return(tibble::tibble(
+                             return(dplyr::tibble(
                                'params' = list(optim_result$par),
                                'value' = optim_result$value
                              ))
                            })
+  fitted_params <- dplyr::bind_rows(fitted_params)
 
   result <- fitted_params$params[[which.max(fitted_params$value)]]
   result[1] <- S_guess * result[1]
@@ -507,16 +505,15 @@ FitColorsFunction <- function(dataset, WL, Wa, Wb, center = TRUE){
 #'   data2cielab(df, LAB_coordinates = TRUE)
 #' }
 data2cielab <- function(dataset, WL = 1, Wa = 1, Wb = 1, S = 1, LAB_coordinates = FALSE, center = TRUE, verbose = FALSE){
-  if (verbose & !requireNamespace("tictoc", quietly = TRUE)) {
-    stop("Package 'tictoc' is needed to run data2cielab in verbose mode.")
-  }
 
   dataset <- PrepData(dataset)
 
-  tictoc::tic('Fitting data to CIELAB space')
+  if (verbose) start_fit <- Sys.time()
   final_params <- FitColorsFunction(dataset, WL, Wa, Wb, center = center)
-  tictoc::toc(quiet = !verbose)
   if (verbose) {
+    end_fit <- Sys.time()
+    print('Fitting data to CIELAB space:')
+    print(end_fit - start_fit)
     print('Fitted params:')
     print(final_params)
     print('Transforming data')
@@ -542,14 +539,16 @@ data2cielab <- function(dataset, WL = 1, Wa = 1, Wb = 1, S = 1, LAB_coordinates 
   if (LAB_coordinates) {
     # Turn coordinates matrix into a data frame
     col_coords <- colorspace::coords(colorspace_obj) %>%
-      as.data.frame() %>%
-      tibble::rownames_to_column('names')
+      as.data.frame()
+    col_coords$names <- rownames(col_coords)
+    rownames(col_coords) <- NULL
     return(col_coords)
   } else {
     # Turn hex character vector into a data frame
     col_hex <- colorspace::hex(colorspace_obj, fixup = TRUE) %>%
-      data.frame(colour = .) %>%
-      tibble::rownames_to_column('names')
+      data.frame(colour = .)
+    col_hex$names <- rownames(col_hex)
+    rownames(col_hex) <- NULL
     return(col_hex)
   }
 }
