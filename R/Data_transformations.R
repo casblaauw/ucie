@@ -293,6 +293,18 @@ ObjectiveFunction <- function(param, WL, Wa, Wb, data, polygon, faces) {
   return(f)
 }
 
+#' Estimate an initial translation parameter
+#'
+#' @param dataset Data or convex hull vertices of data to fit inside the colorspace.
+#' @param colorspace Colorspace points or convex hull vertices of colorspace.
+#'
+#' @details Centers using polygon centroid of any supplied data's convex hull,
+#' so any version of the data (from full data to only points on convex hull) can be
+#' used for both `dataset` and `colorspace`.
+#' Should return basically 0,0,0 if both have been centered before guessing.
+#'
+#' @return A named vector TrL,Tra,Trb of translation guess values.
+#' @keywords internal
 TranslationGuess <- function(dataset, colorspace) {
   centroidval_colorspace <- PolygonCentroid(colorspace) # centroid of color space
   centroidval_cloud <- PolygonCentroid(dataset) # centroid of cloud
