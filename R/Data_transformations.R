@@ -303,70 +303,45 @@ TranslationGuess <- function(dataset, colorspace) {
   return(guess)
 }
 
+#' Estimate an initial scaling parameter
+#'
+#' Takes the range (max - min) in all 3 dimensions for both data and polygon,
+#' does simple 'alignment' by matching smallest to smallest and biggest to biggest
+#' dimensions, then returns the smallest ratio between ranges: i.e. the scaling
+#' factor necessary for the first dimension to 'bump' into the polygon limits.
+#'
+#' @param dataset Data to fit inside the polygon.
+#' Only uses the minimum and maximum of each of 3 dimensions, so inputting convex hull
+#' vertices of the data (like from [DataConvex()] returns the same result.
+#' @param polygon Vertices of the polygon to fit inside (e.g. CIELAB convex hull vertices)
+#'
+#' @return A named integer S to use as a first scaling value.
+#' @keywords internal
 ScalingGuess <- function(dataset, polygon) {
-  #--- Scaling factor ---#
-  ConvexCloud <- (DataConvex(dataset))
 
-  Cloud1Size <- max(ConvexCloud[, 1]) - min(ConvexCloud[, 1])
-  Cloud2Size <- max(ConvexCloud[, 2]) - min(ConvexCloud[, 2])
-  Cloud3Size <- max(ConvexCloud[, 3]) - min(ConvexCloud[, 3])
-
-  # Find the smallest and use it as L
-
-  Cloud_scaled <- matrix(nrow = nrow(ConvexCloud), ncol = ncol(ConvexCloud))
-  if (Cloud1Size < Cloud2Size & Cloud1Size < Cloud3Size) {
-    MaxScalingFactor_1 <- max(polygon[,1]) / Cloud1Size
-    MaxScalingFactor_2 <- max(polygon[,2]) / Cloud2Size
-    MaxScalingFactor_3 <- max(polygon[,3]) / Cloud3Size
-
-    MaxScalingFactor <- ifelse(MaxScalingFactor_1 < MaxScalingFactor_2,MaxScalingFactor_1, MaxScalingFactor_2)
-    MaxScalingFactor <- ifelse(MaxScalingFactor < MaxScalingFactor_3, MaxScalingFactor, MaxScalingFactor_3)
-
-    # #offset
-    # Cloud1offset <- (max(ConvexCloud[, 1]) + min(ConvexCloud[, 1])) / 2
-    # Cloud2offset <- (max(ConvexCloud[, 2]) + min(ConvexCloud[, 2])) / 2
-    # Cloud3offset <- (max(ConvexCloud[, 3]) + min(ConvexCloud[, 3])) / 2
-    #
-    # Cloud_scaled[, 1] <- (ConvexCloud[, 1] - Cloud1offset) * MaxScalingFactor + 50
-    # Cloud_scaled[, 2] <- (ConvexCloud[, 2] - Cloud2offset) * MaxScalingFactor
-    # Cloud_scaled[, 3] <- (ConvexCloud[, 3] - Cloud3offset) * MaxScalingFactor
-  }
-  if (Cloud2Size < Cloud1Size & Cloud2Size < Cloud3Size) {
-    MaxScalingFactor_1 <- max(polygon[,2]) / Cloud1Size
-    MaxScalingFactor_2 <- max(polygon[,1]) / Cloud2Size
-    MaxScalingFactor_3 <- max(polygon[,3]) / Cloud3Size
-
-    MaxScalingFactor <- ifelse(MaxScalingFactor_1 < MaxScalingFactor_2, MaxScalingFactor_1, MaxScalingFactor_2)
-    MaxScalingFactor <- ifelse(MaxScalingFactor < MaxScalingFactor_3, MaxScalingFactor, MaxScalingFactor_3)
-
-    # #offset
-    # Cloud1offset <- (max(ConvexCloud[, 1]) + min(ConvexCloud[, 1])) / 2
-    # Cloud2offset <- (max(ConvexCloud[, 2]) + min(ConvexCloud[, 2])) / 2
-    # Cloud3offset <- (max(ConvexCloud[, 3]) + min(ConvexCloud[, 3])) / 2
-    #
-    # Cloud_scaled[, 1] <- (ConvexCloud[, 2] - Cloud2offset) * MaxScalingFactor + 50
-    # Cloud_scaled[, 2] <- (ConvexCloud[, 1] - Cloud1offset) * MaxScalingFactor
-    # Cloud_scaled[, 3] <- (ConvexCloud[, 3] - Cloud3offset) * MaxScalingFactor
-  }
-  if (Cloud3Size < Cloud1Size & Cloud3Size < Cloud2Size) {
-    MaxScalingFactor_1 <- max(polygon[,3]) / Cloud1Size
-    MaxScalingFactor_2 <- max(polygon[,2]) / Cloud2Size
-    MaxScalingFactor_3 <- max(polygon[,1]) / Cloud3Size
-
-    MaxScalingFactor <- ifelse( MaxScalingFactor_1 < MaxScalingFactor_2, MaxScalingFactor_1, MaxScalingFactor_2)
-    MaxScalingFactor <- ifelse(MaxScalingFactor < MaxScalingFactor_3, MaxScalingFactor, MaxScalingFactor_3)
-
-    # #offset
-    # Cloud1offset <- (max(ConvexCloud[, 1]) + min(ConvexCloud[, 1])) / 2
-    # Cloud2offset <- (max(ConvexCloud[, 2]) + min(ConvexCloud[, 2])) / 2
-    # Cloud3offset <- (max(ConvexCloud[, 3]) + min(ConvexCloud[, 3])) / 2
-    #
-    # Cloud_scaled[, 1] <- (ConvexCloud[, 3] - Cloud3offset) * MaxScalingFactor  + 50
-    # Cloud_scaled[, 2] <- (ConvexCloud[, 1] - Cloud1offset) * MaxScalingFactor
-    # Cloud_scaled[, 3] <- (ConvexCloud[, 2] - Cloud2offset) * MaxScalingFactor
+  if (ncol(dataset) != 3 | ncol(polygon) != 3) {
+    stop('Both the dataset and polygon must be 3D to guess the scaling factor.')
   }
 
-  return(c(S = MaxScalingFactor))
+  # Get ranges in all 3 dimensions for both the data and polygon
+  DataSizes <- c(
+    max(dataset[, 1]) - min(dataset[, 1]),
+    max(dataset[, 2]) - min(dataset[, 2]),
+    max(dataset[, 3]) - min(dataset[, 3])
+  )
+  PolygonSizes <- c(
+    max(polygon[, 1]) - min(polygon[, 1]),
+    max(polygon[, 2]) - min(polygon[, 2]),
+    max(polygon[, 3]) - min(polygon[, 3])
+  )
+
+  # Match smallest to smallest range etc to mimic rotation, and compute relative scale
+  ScalingFactors <- sort(PolygonSizes) / sort(DataSizes)
+
+  # Get the smallest (i.e. first to constrain) scaling factor, use that as guess
+  S_guess <- min(MaxScalingFactor_1, MaxScalingFactor_2, MaxScalingFactor_3)
+
+  return(c('S' = S_guess))
 }
 
 #' Calculate centroid of the data's convex hull polygon
