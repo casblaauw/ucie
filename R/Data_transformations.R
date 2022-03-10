@@ -351,7 +351,7 @@ ScalingGuess <- function(dataset, polygon) {
   ScalingFactors <- sort(PolygonSizes) / sort(DataSizes)
 
   # Get the smallest (i.e. first to constrain) scaling factor, use that as guess
-  S_guess <- min(MaxScalingFactor_1, MaxScalingFactor_2, MaxScalingFactor_3)
+  S_guess <- min(ScalingFactors)
 
   return(c('S' = S_guess))
 }
