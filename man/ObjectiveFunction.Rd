@@ -4,7 +4,7 @@
 \alias{ObjectiveFunction}
 \title{Data fit minimalisation function}
 \usage{
-ObjectiveFunction(param, WL, Wa, Wb, data, polygon, faces, vol_ratio)
+ObjectiveFunction(param, WL, Wa, Wb, data, polygon, faces)
 }
 \arguments{
 \item{param}{Vector of fitting parameters (S, RotL, Rota, Rotb, TrL, Tra, Trb)}
@@ -22,19 +22,14 @@ Like output returned by [DataConvex()].}
 
 \item{faces}{Edges (lines) of the colour space convex hull, as a matrix.
 Like output returned by [geometry::convhulln()].}
-
-\item{vol_ratio}{Ratio of data volume to color space volume before scaling.}
 }
 \description{
 Takes fit and weighting parameters, the convex hull of the data, and the
 convex hull (vertices and faces) of the colour space to fit the data to.
-Returns a fit metric, consisting of the ratio between the data volume and
-colour space volume, penalised strongly by any points outside the colour space.
+Returns a fit metric, consisting of the scaling parameter, penalised strongly
+by any points outside the colour space.
 }
 \details{
-The data-colourspace volume ratio is calculated by multiplying the original
-supplied ratio with the scaling parameter to the power of 3.
-
 The penalty function calculates the distance of all outside points to the
 closest colour space hull point, then subtracts the sum of all squared distances.
 }

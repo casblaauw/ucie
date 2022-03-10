@@ -273,11 +273,8 @@ Distance <- function(S, RotL, Rota, Rotb,  TrL, Tra, Trb, WL, Wa, Wb, Query, pol
 #'
 #' Takes fit and weighting parameters, the convex hull of the data, and the
 #' convex hull (vertices and faces) of the colour space to fit the data to.
-#' Returns a fit metric, consisting of the ratio between the data volume and
-#' colour space volume, penalised strongly by any points outside the colour space.
-#'
-#' The data-colourspace volume ratio is calculated by multiplying the original
-#' supplied ratio with the scaling parameter to the power of 3.
+#' Returns a fit metric, consisting of the scaling parameter, penalised strongly
+#' by any points outside the colour space.
 #'
 #' The penalty function calculates the distance of all outside points to the
 #' closest colour space hull point, then subtracts the sum of all squared distances.
@@ -291,12 +288,11 @@ Distance <- function(S, RotL, Rota, Rotb,  TrL, Tra, Trb, WL, Wa, Wb, Query, pol
 #' Like output returned by [DataConvex()].
 #' @param faces Edges (lines) of the colour space convex hull, as a matrix.
 #' Like output returned by [geometry::convhulln()].
-#' @param vol_ratio Ratio of data volume to color space volume before scaling.
 #'
 #' @keywords internal
-ObjectiveFunction <- function(param, WL, Wa, Wb, data, polygon, faces, vol_ratio) {
+ObjectiveFunction <- function(param, WL, Wa, Wb, data, polygon, faces) {
   outside_dist <- Distance(param[1], param[2], param[3], param[4], param[5], param[6], param[7], WL, Wa, Wb, data, polygon, faces)
-  f <- (vol_ratio*(param[1]^3)) - sum(outside_dist^2)
+  f <- param[1] - sum(outside_dist^2)
   return(f)
 }
 
@@ -431,12 +427,12 @@ FitColorsFunction <- function(dataset, WL, Wa, Wb, center = TRUE){
   dat_polygon <- DataConvex(dataset)
   LAB_polygon <- DataConvex(LAB_space)
 
-  dat_chull <- geometry::convhulln(dat_polygon, output.options = 'FA')
   LAB_chull <- geometry::convhulln(LAB_polygon, output.options = 'FA')
-  vol_ratio <- dat_chull$vol/LAB_chull$vol
+
 
   #------ Initial guess ---------------------------------------------------------#
-  S <- ScalingGuess(dat_polygon, LAB_polygon)
+  S_guess <- ScalingGuess(dat_polygon, LAB_polygon)
+  dat_polygon_scaled <- Scaling(dat_polygon, S)
 
   # Create a list of start values, forcibly mirroring L-rotation to explore rotation landscape
   start_params <- purrr::map(
@@ -446,12 +442,11 @@ FitColorsFunction <- function(dataset, WL, Wa, Wb, center = TRUE){
                Rota = pi / 4,
                Rotb = pi / 4)
 
-      Tr <- dataset %>%
-        Scaling(S) %>%
+      Tr <- dat_polygon_scaled %>%
         Rotation(Rot[1], Rot[2], Rot[3]) %>%
         TranslationGuess(LAB_space)
 
-      params <- c(S, Rot, Tr) #S, RotL, Rota, Rotb, TrL, Tra, Trb
+      params <- c(S = 1, Rot, Tr) #S, RotL, Rota, Rotb, TrL, Tra, Trb
 
       return(params)
     }
@@ -470,10 +465,9 @@ FitColorsFunction <- function(dataset, WL, Wa, Wb, center = TRUE){
                                WL = WL,
                                Wa = Wa,
                                Wb = Wb,
-                               data = dat_polygon,
+                               data = dat_polygon_scaled,
                                polygon = LAB_polygon,
                                faces = LAB_chull$hull,
-                               vol_ratio = vol_ratio,
                                control = list(fnscale = -1, maxit = 1000)
                              )
                              return(tibble::tibble(
@@ -483,6 +477,7 @@ FitColorsFunction <- function(dataset, WL, Wa, Wb, center = TRUE){
                            })
 
   result <- fitted_params$params[[which.max(fitted_params$value)]]
+  result[1] <- S_guess * result[1]
   return(result)
 }
 
