@@ -432,7 +432,7 @@ FitColorsFunction <- function(dataset, WL, Wa, Wb, center = TRUE){
 
   #------ Initial guess ---------------------------------------------------------#
   S_guess <- ScalingGuess(dat_polygon, LAB_polygon)
-  dat_polygon_scaled <- Scaling(dat_polygon, S)
+  dat_polygon_scaled <- Scaling(dat_polygon, S_guess)
 
   # Create a list of start values, forcibly mirroring L-rotation to explore rotation landscape
   start_params <- purrr::map(
@@ -446,7 +446,7 @@ FitColorsFunction <- function(dataset, WL, Wa, Wb, center = TRUE){
         Rotation(Rot[1], Rot[2], Rot[3]) %>%
         TranslationGuess(LAB_space)
 
-      params <- c(S = 1, Rot, Tr) #S, RotL, Rota, Rotb, TrL, Tra, Trb
+      params <- c('S' = 1, Rot, Tr) #S, RotL, Rota, Rotb, TrL, Tra, Trb
 
       return(params)
     }
